@@ -1,5 +1,5 @@
-# Insider-Trade-Analysis
-Jupyter Notebooks illustrating a data science project to see whether insider trading is measurably reflected in stock price movements.
+## Insider-Trade-Analysis
+### Jupyter Notebooks illustrating a data science project to see whether insider trading is measurably reflected in stock price movements.
 
 The main notebook is `Insider_Trade_Detection.ipynb`. You can use it immediately upon download, for demonstation purposes. It assumes the existence of three files in the current working directory:
 1. "tickerlist.csv" --- This is simple list of stock ticker symbols, one per line.
