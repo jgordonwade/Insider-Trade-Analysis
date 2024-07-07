@@ -1,6 +1,7 @@
 import requests
 import time
 import xml.etree.ElementTree as et
+from  datetime import datetime
 
 import insider_trade_detector as itd
 
@@ -87,7 +88,7 @@ def parse_insider_element(insider):
         return transactions
 
 #------------------------------------------------------------
-def ticker_to_filing_list(symbol:str)->dict:
+def ticker_to_filing_list(symbol: str, earliest_date: str = '1999-12-31') -> dict:
 
     # For a given ticker, get the  URL's for the XML versions of the submissions
 
@@ -109,6 +110,8 @@ def ticker_to_filing_list(symbol:str)->dict:
     #   response['filings'][recent']['form'] We're interested in Form 4's, for which this value is simply '4'
     #   response['filings'][recent']['primaryDocument'] The file name of thej XML version of the actual filing. 
 
+
+    earliest_date = datetime.strptime(earliest_date,'%Y-%m-%d')
 
     cik = ticker_to_cik(symbol)
     url = 'https://data.sec.gov/submissions/CIK'+cik+'.json'
@@ -142,8 +145,10 @@ def ticker_to_filing_list(symbol:str)->dict:
     n_filings = len(recent_filings['accessionNumber'])
     form4_indices=[]
     for filing_num in range(n_filings):
-        if recent_filings['form'][filing_num] == '4':
-            form4_indices = form4_indices+[filing_num]
+        if len(recent_filings['reportDate'][filing_num])>5:
+            trade_date = datetime.strptime(recent_filings['filingDate'][filing_num],'%Y-%m-%d')
+            if recent_filings['form'][filing_num] == '4' and trade_date>earliest_date:
+                form4_indices = form4_indices+[filing_num]
 
 
     # Now build a dict `recent_forms` which is keyed in accession number 
@@ -189,7 +194,7 @@ def filing_to_urls(filing_dict:dict):
 
     return [txt_url, xml_url]
 #-------------------------------------------------------------------------
-def ticker_to_insider_buys(ticker)->list:
+def ticker_to_insider_buys(ticker,earliest_date: str = '1999-12-31')->list:
     '''
     - **Input:** A string containing a single  ticker symbol.
 
@@ -212,7 +217,7 @@ def ticker_to_insider_buys(ticker)->list:
           each representing an insider buy transaction. These transactions are then appended to the `insider_buys` list.
     '''
         
-    filing_dict_list = itd.ticker_to_filing_list(ticker)
+    filing_dict_list = itd.ticker_to_filing_list(ticker, earliest_date)
     
     estimated_time = len(filing_dict_list)*0.004146 + 0.104709 
     print(f'{len(filing_dict_list)} filings. This loop will take about {estimated_time:.2f} minutes')
